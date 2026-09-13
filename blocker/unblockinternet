@@ -1,0 +1,7 @@
+#!/bin/bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+iptables -P OUTPUT ACCEPT
+iptables -P INPUT ACCEPT
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') Internet Unblocked" >>"$DIR/logfile.log"

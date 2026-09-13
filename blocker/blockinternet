@@ -1,0 +1,7 @@
+#!/bin/bash
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+iptables -P OUTPUT DROP
+iptables -P INPUT DROP
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') Internet Blocked" >>"$DIR/logfile.log"
