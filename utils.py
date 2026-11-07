@@ -13,7 +13,11 @@ DEFAULT_DATA = {
     "mood_entries": [],
     "anxiety_entries": [],
     "meds": {"date": None, "taken": False, "snooze_until": None},
-    "settings": {"medicine_enabled": False, "block_hour": DEFAULT_BLOCK_HOUR},
+    "settings": {
+        "medicine_enabled": False,
+        "block_hour": DEFAULT_BLOCK_HOUR,
+        "meds_block_hour": DEFAULT_BLOCK_HOUR,
+    },
     "block_reasons": [],
     "blocked": False,
     "last_updated": None,
@@ -77,7 +81,12 @@ def notify(title, message):
     if not shutil.which("notify-send"):
         return
     try:
-        subprocess.run(["notify-send", title, message], check=False, timeout=5)
+        subprocess.run(
+            ["notify-send", title, message],
+            check=False,
+            timeout=5,
+            stderr=subprocess.DEVNULL,
+        )
     except Exception:
         pass
 

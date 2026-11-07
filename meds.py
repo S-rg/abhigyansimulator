@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import blocking
-from config import MEDS_SNOOZE_MINUTES
+from config import MEDS_SNOOZE_MINUTES, DEFAULT_MEDS_BLOCK_HOUR
 from utils import load_data, save_data, today_key, is_interactive, notify, yes_no
 
 REASON = "meds"
@@ -58,9 +58,14 @@ def status():
     data = _ensure_state(load_data())
     settings = data["settings"]
     meds = data["meds"]
+    block_hour = settings.get(
+        "meds_block_hour",
+        settings.get("block_hour", DEFAULT_MEDS_BLOCK_HOUR),
+    )
     print(f"Medicine reminders: {'ON' if settings['medicine_enabled'] else 'OFF'}")
     if settings["medicine_enabled"]:
         print(f"Taken today: {'yes' if meds['taken'] else 'no'}")
+        print(f"Block deadline: {block_hour:02d}:00")
         if meds["snooze_until"] and not meds["taken"]:
             print(f"Next check: {meds['snooze_until']}")
 
@@ -81,33 +86,35 @@ def _ask(meds_only):
 
 def check():
     data = _ensure_state(load_data())
+    save_data(data)
 
     if not data["settings"]["medicine_enabled"]:
-        save_data(data)
+        blocking.unblock(REASON)
         return
 
     if data["meds"]["taken"]:
-        save_data(data)
+        blocking.unblock(REASON)
         return
 
     now = datetime.now()
-    snooze_until_raw = data["meds"]["snooze_until"]
+    block_hour = data.get("settings", {}).get(
+        "meds_block_hour",
+        data.get("settings", {}).get("block_hour", DEFAULT_MEDS_BLOCK_HOUR),
+    )
 
-    if snooze_until_raw is None:
-        save_data(data)
-        answer = _ask(meds_only=False)
-        if answer is True:
-            mark_taken()
-        else:
-            snooze()
+    deadline = now.replace(hour=block_hour, minute=0, second=0, microsecond=0)
+    is_late = now >= deadline
+
+    snooze_until_raw = data["meds"]["snooze_until"]
+    if snooze_until_raw is not None:
+        snooze_until = datetime.fromisoformat(snooze_until_raw)
+        if now < snooze_until:
+            return
+
+    if not is_late:
+        blocking.unblock(REASON)
         return
 
-    snooze_until = datetime.fromisoformat(snooze_until_raw)
-    if now < snooze_until:
-        save_data(data)
-        return  
-
-    save_data(data)
     blocking.block(REASON)
     answer = _ask(meds_only=True)
     if answer is True:

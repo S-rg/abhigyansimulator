@@ -1,3 +1,4 @@
+import sys
 import subprocess
 
 from config import BLOCK_SCRIPT, UNBLOCK_SCRIPT
@@ -19,9 +20,11 @@ def block(reason):
 
     if not was_blocked:
         try:
-            subprocess.run(["sudo", str(BLOCK_SCRIPT)], check=False)
+            res = subprocess.run(["sudo", str(BLOCK_SCRIPT)], check=False)
+            if res.returncode != 0:
+                print(f"Warning: sudo failed with exit code {res.returncode}", file=sys.stderr)
         except FileNotFoundError:
-            pass
+            print(f"Error: block script not found at {BLOCK_SCRIPT}", file=sys.stderr)
         print(f"Internet blocked ({reason}).")
 
 
@@ -39,9 +42,11 @@ def unblock(reason):
 
     if not reasons:
         try:
-            subprocess.run(["sudo", str(UNBLOCK_SCRIPT)], check=False)
+            res = subprocess.run(["sudo", str(UNBLOCK_SCRIPT)], check=False)
+            if res.returncode != 0:
+                print(f"Warning: sudo failed with exit code {res.returncode}", file=sys.stderr)
         except FileNotFoundError:
-            pass
+            print(f"Error: unblock script not found at {UNBLOCK_SCRIPT}", file=sys.stderr)
         print("Internet unblocked.")
 
 

@@ -88,14 +88,14 @@ def config_set(key, value):
     data = load_data()
     settings = data.setdefault("settings", {})
 
-    if key == "block_hour":
+    if key in ("block_hour", "meds_block_hour"):
         try:
             value = int(value)
         except ValueError:
-            print("block_hour must be an integer 0-23")
+            print(f"{key} must be an integer 0-23")
             return
         if not (0 <= value <= 23):
-            print("block_hour must be 0-23")
+            print(f"{key} must be 0-23")
             return
     elif key == "medicine_enabled":
         value = value.strip().lower() in ("1", "true", "yes", "on")

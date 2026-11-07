@@ -140,7 +140,7 @@ def export_csv(path):
         ["timestamp"]
         + [f"{pid}_effort" for pid in perms]
         + [f"{pid}_completed" for pid in perms]
-        + ["mood_energy", "mood_happiness", "anxiety"]
+        + ["mood_energy", "mood_happiness", "anxiety", "meds"]
     )
 
     with open(path, "w", newline="") as f:
@@ -156,6 +156,7 @@ def export_csv(path):
             row["mood_energy"] = mood.get("energy")
             row["mood_happiness"] = mood.get("happiness")
             row["anxiety"] = l.get("anxiety")
+            row["meds"] = l.get("meds", "")
             w.writerow(row)
 
     print(f"Exported {len(logs)} log(s) to {path}")

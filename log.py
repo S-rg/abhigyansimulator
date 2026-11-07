@@ -1,5 +1,7 @@
+import blocking
+import meds
 import meters
-from utils import load_data, save_data, now_str, get_score
+from utils import load_data, save_data, now_str, get_score, today_key, yes_no
 
 
 def get_task_scores(label):
@@ -49,6 +51,23 @@ def log():
     entry["mood"] = {"energy": energy, "happiness": happiness}
     entry["anxiety"] = anxiety
 
+    settings = data.get("settings", {})
+    if settings.get("medicine_enabled"):
+        print("\n=== Medicine ===")
+        meds_data = data.get("meds", {})
+        if meds_data.get("taken") and meds_data.get("date") == today_key():
+            print("Meds already marked as taken today.")
+            entry["meds"] = True
+        else:
+            meds_taken = yes_no("Have you taken your meds today? (y/n): ")
+            if meds_taken:
+                meds_state = data.setdefault("meds", {})
+                meds_state["date"] = today_key()
+                meds_state["taken"] = True
+                meds_state["snooze_until"] = None
+                print("Meds marked as taken for today. Nice.")
+            entry["meds"] = meds_taken
+
     print("\n=== Tomorrow's todos ===")
     entry["todo"] = get_todo_list()
 
@@ -61,6 +80,9 @@ def log():
     )
     data["last_updated"] = now_str()
     save_data(data)
+    blocking.unblock("daily_log")
+    if entry.get("meds"):
+        blocking.unblock("meds")
 
     print("\nLogged. Nice work.")
     return 0
